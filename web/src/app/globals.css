@@ -157,3 +157,5 @@ details.why[open] summary { margin-bottom: 10px; }
 .pay-opt { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
 .pay-opt:hover { border-color: var(--teal); background: #fbfefd; }
 .pay-opt[aria-busy='true'] { border-color: var(--teal); background: var(--teal-2); }
+
+@media (max-width: 560px) { .nav-hide-sm { display: none; } }

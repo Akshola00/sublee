@@ -13,14 +13,17 @@ export function Header() {
           <span className="logo-mark" aria-hidden>S</span>
           Sublee
         </Link>
-        {!ready ? null : accountId ? (
-          <div className="row">
-            <span className="small muted" title={accountId}>{short(accountId)}</span>
-            <button className="btn btn-secondary btn-sm" onClick={disconnect}>Sign out</button>
-          </div>
-        ) : (
-          <button className="btn btn-secondary btn-sm" onClick={connect}>Connect wallet</button>
-        )}
+        <nav className="row" style={{ gap: 6 }}>
+          <Link href="/create" className="btn btn-ghost btn-sm nav-hide-sm">For experts</Link>
+          {ready && accountId && <Link href="/me" className="btn btn-ghost btn-sm">My specialists</Link>}
+          {!ready ? null : accountId ? (
+            <button className="btn btn-secondary btn-sm" onClick={disconnect} title={`Signed in as ${accountId}`}>
+              <span className="nav-hide-sm">{short(accountId)} · </span>Sign out
+            </button>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={connect}>Connect wallet</button>
+          )}
+        </nav>
       </div>
     </header>
   );

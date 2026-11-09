@@ -127,8 +127,9 @@ balances: patient_id -> fiat credit (USD cents)   // credited by server after St
 | `ft_on_transfer` (USDC) | USDC contract | msg = `{token_id}` → same split, Consult(Paid) |
 | `pay_consult_credit(token_id)` | patient | Debits the fiat credit balance, creates Consult(Paid) |
 | `credit_fiat(account, cents, stripe_session)` | server key only | Idempotent on `stripe_session` |
-| `mark_used(consult_id)` | server key only | Paid → Used; increments `uses` |
-| `refund(consult_id)` | server key only | Paid → Refunded (inference failed) |
+| `claim(consult_id)` | server key only | Paid → Claimed: atomic single-use lock before inference |
+| `mark_used(consult_id)` | server key only | Claimed → Used; releases escrow 85/15; increments `uses` |
+| `refund(consult_id)` | server key only | Paid or Claimed → Refunded (inference failed, or patient cancelled) |
 | `rate(consult_id, 1..5)` | patient of a Used consult | Once per consult |
 | views | anyone | `list_prompts`, `get_prompt`, `consults_for`, `balance_of`, NEP-171/177/199 views |
 
@@ -144,6 +145,9 @@ balances: patient_id -> fiat credit (USD cents)   // credited by server after St
 |---|---|
 | `GET /api/prompt-key` | Returns the Sublee prompt sealing public key |
 | `POST /api/consult` | Body: `{consult_id, model_pub_key, client_pub_key, encrypted_messages, nep413_signature}`. Verifies the signature is from the consult's patient, checks Consult is Paid on-chain, unseals the prompt, re-encrypts preamble + prompt to `model_pub_key`, forwards to NEAR AI with E2EE headers, streams the encrypted response back, calls `mark_used` (or `refund` on upstream failure). **Never logs bodies.** |
+| `POST /api/consult/cancel` | Patient signs NEP-413 "cancel consult #N"; if the consult is Paid and theirs, server calls `refund`. Covers verification failures before anything is sent. |
+| `POST /api/attest` | Verifies Intel TDX + NVIDIA signature chains for a quote the browser fetched itself (browser already checked key + nonce binding). |
+| `GET /api/signature/[chatId]` | Proxies the enclave's response signature (needs our API key); the browser verifies it. |
 | `POST /api/stripe/checkout` | Creates a Checkout Session (test mode) for N consult credits |
 | `POST /api/stripe/webhook` | On `checkout.session.completed` → `credit_fiat` (idempotent) |
 

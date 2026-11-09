@@ -18,3 +18,6 @@ export const E2EE_MODELS = [
 /** NEP-413 auth message for a consult. Binds the wallet signature to this consult and these exact ciphertexts. */
 export const consultAuthMessage = (consultId: number, bodyHash: string) =>
   `Sublee consult #${consultId}\nI authorise sending my encrypted case to the enclave.\nbody:${bodyHash}`;
+
+/** NEP-413 message a patient signs to cancel a paid consult they haven't used. */
+export const cancelAuthMessage = (consultId: number) => `Sublee: cancel consult #${consultId} and refund me.`;

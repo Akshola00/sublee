@@ -1,9 +1,10 @@
 'use client';
 // Consult flow: Pay → Your case → Verify & send → Opinion. Visual rules: docs/DESIGN.md.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useWallet } from '@/lib/wallet';
-import { formatCents, formatNear, formatUsdc, rating } from '@/lib/chain';
-import { runConsult, type Stage } from '@/lib/consult-client';
+import { formatCents, formatNear, formatUsdc, rating, viewCall } from '@/lib/chain';
+import { cancelConsult, runConsult, type Stage } from '@/lib/consult-client';
 import type { AttestationResult, Check } from '@/lib/attestation';
 import { caseToMessage, parseOpinion, type CaseInput, type Opinion } from '@/lib/schema';
 import type { PromptView } from '@/lib/types';
@@ -27,6 +28,7 @@ type Method = 'near' | 'usdc' | 'credit';
 
 export function ConsultFlow({ prompt }: { prompt: PromptView }) {
   const w = useWallet();
+  const justMinted = useSearchParams().get('minted') === '1';
   const [consultId, setConsultId] = useState<number | null>(null);
   const [form, setForm] = useState<CaseInput>({ concern: '', attachmentsText: [] });
   const [stage, setStage] = useState<Stage | null>(null);
@@ -36,6 +38,26 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
   const [opinion, setOpinion] = useState<Opinion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [resumed, setResumed] = useState(false);
+  const [refunded, setRefunded] = useState(false);
+
+  // Coming back with a paid consult you haven't used yet? Pick it up instead of paying again.
+  useEffect(() => {
+    if (!w.accountId) return;
+    let cancelled = false;
+    viewCall<{ id: number; token_id: string; status: string }[]>('consults_for', { account_id: w.accountId, limit: 100 })
+      .then((cs) => {
+        const open = cs.filter((c) => c.token_id === prompt.token_id && c.status === 'Paid').pop();
+        if (!cancelled && open) {
+          setConsultId((cur) => cur ?? open.id);
+          setResumed(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [w.accountId, prompt.token_id]);
 
   const step = opinion || (stage === 'done' && text) ? 3 : stage ? 2 : consultId != null ? 1 : 0;
 
@@ -59,6 +81,17 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
         : m === 'usdc' ? await w.payUsdc(prompt.token_id, prompt.price_usdc)
         : await w.payCredit(prompt.token_id);
       setConsultId(id);
+      setResumed(false);
+      setRefunded(false);
+    });
+
+  const cancel = () =>
+    guard('cancel', async () => {
+      if (consultId == null) return;
+      await cancelConsult(consultId, w.signMessage);
+      setConsultId(null);
+      setResumed(false);
+      setRefunded(true);
     });
 
   const send = () =>
@@ -92,6 +125,11 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
 
   return (
     <div className="wrap section">
+      {justMinted && (
+        <div className="notice notice-info" style={{ marginBottom: 18 }}>
+          Your specialist is live as NFT #{prompt.token_id}. Its instructions are sealed: patients can use it, nobody can read it. Manage it in My specialists.
+        </div>
+      )}
       <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 16 }}>
         <div className="monogram lg" aria-hidden>{monogram(prompt.specialty)}</div>
         <div>
@@ -114,6 +152,10 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
       </ol>
 
       {error && <div className="notice notice-error" role="alert" style={{ marginBottom: 14 }}>{error}</div>}
+      {refunded && step === 0 && <div className="notice notice-info" style={{ marginBottom: 14 }}>Cancelled. Your payment has been returned.</div>}
+      {resumed && step === 1 && (
+        <div className="notice notice-info" style={{ marginBottom: 14 }}>You already paid for consult #{consultId} and haven’t used it yet, so you can carry on here.</div>
+      )}
 
       {step === 0 && (
         <div className="card stack">
@@ -170,7 +212,10 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
             <div className="notice notice-info small">Attached: {form.attachmentsText.map((a) => a.name).join(', ')}</div>
           )}
           <div className="spread">
-            <span className="caption">{form.concern.length < 10 ? 'Add a few words about what’s going on.' : 'Ready to encrypt.'}</span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={cancel} aria-busy={busy === 'cancel'} disabled={!!busy}>
+              {busy === 'cancel' ? 'Confirm in your wallet…' : 'Cancel and refund'}
+            </button>
+            <span className="caption" style={{ marginLeft: 'auto' }}>{form.concern.length < 10 ? 'Add a few words about what’s going on.' : 'Ready to encrypt.'}</span>
             <button className="btn btn-primary" disabled={!!busy || form.concern.trim().length < 10} onClick={send}>
               Encrypt and send
             </button>

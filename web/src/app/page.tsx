@@ -60,6 +60,16 @@ export default function Home() {
           <Specialists />
         </Suspense>
       </section>
+
+      <section className="wrap-wide section">
+        <div className="card spread" style={{ padding: 24 }}>
+          <div style={{ maxWidth: 560 }}>
+            <h2 style={{ marginBottom: 6 }}>Are you an expert?</h2>
+            <p className="muted" style={{ margin: 0 }}>Write how you think through a case and mint it as an NFT. Patients use it privately; you earn 85% of every consult, and nobody can copy your prompt.</p>
+          </div>
+          <a href="/create" className="btn btn-secondary">Create a specialist</a>
+        </div>
+      </section>
     </>
   );
 }

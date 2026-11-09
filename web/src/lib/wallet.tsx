@@ -15,15 +15,55 @@ type Ctx = {
   payUsdc: (tokenId: string, units: string) => Promise<number>;
   payCredit: (tokenId: string) => Promise<number>;
   signMessage: (message: string, nonce: Uint8Array) => Promise<{ accountId: string; publicKey: string; signature: string }>;
+  mintPrompt: (args: MintArgs) => Promise<string>;
+  updatePrompt: (args: UpdateArgs) => Promise<void>;
+  claimUsdc: () => Promise<void>;
 };
+
+export type MintArgs = {
+  title: string;
+  description: string;
+  media: string | null;
+  specialty: string;
+  model: string;
+  price_near: string;
+  price_usdc: string;
+  price_cents: string;
+  sealed_prompt: string;
+};
+export type UpdateArgs = {
+  token_id: string;
+  price_near?: string;
+  price_usdc?: string;
+  price_cents?: string;
+  active?: boolean;
+  sealed_prompt?: string;
+};
+
+/** Storage deposit for minting; the contract refunds whatever isn't used. */
+const MINT_DEPOSIT = '100000000000000000000000'; // 0.1 NEAR
+
+function logsOf(outcome: Outcome): string[] {
+  return (outcome as { receipts_outcome?: { outcome: { logs: string[] } }[] }).receipts_outcome?.flatMap((r) => r.outcome.logs) ?? [];
+}
+
+function mintedTokenFrom(outcome: Outcome): string {
+  for (const l of logsOf(outcome)) {
+    if (!l.startsWith('EVENT_JSON:')) continue;
+    try {
+      const e = JSON.parse(l.slice('EVENT_JSON:'.length));
+      if (e.standard === 'nep171' && e.event === 'nft_mint') return String(e.data[0].token_ids[0]);
+    } catch {}
+  }
+  throw new Error('Minted, but the token id was not found. Check My specialists.');
+}
 
 const WalletCtx = createContext<Ctx | null>(null);
 const GAS_100 = '100000000000000';
 
 /** Find the consult id from the contract's `consult_paid` NEP-297 event in a tx outcome. */
 function consultIdFrom(outcome: Outcome, patient: string): number {
-  const logs = (outcome as { receipts_outcome?: { outcome: { logs: string[] } }[] }).receipts_outcome?.flatMap((r) => r.outcome.logs) ?? [];
-  for (const l of logs) {
+  for (const l of logsOf(outcome)) {
     if (!l.startsWith('EVENT_JSON:')) continue;
     try {
       const e = JSON.parse(l.slice('EVENT_JSON:'.length));
@@ -95,6 +135,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       signMessage: async (message, nonce) => {
         const w = await wallet();
         return w.signMessage({ message, recipient: CONTRACT_ID, nonce });
+      },
+      mintPrompt: async (args) => mintedTokenFrom(await call(CONTRACT_ID, 'mint_prompt', { args }, MINT_DEPOSIT)),
+      updatePrompt: async ({ token_id, ...rest }) => {
+        // Storage can grow with a new prompt version; attach a deposit only then (excess is refunded).
+        await call(CONTRACT_ID, 'update_prompt', { token_id, ...rest }, rest.sealed_prompt ? MINT_DEPOSIT : '0');
+      },
+      claimUsdc: async () => {
+        await call(CONTRACT_ID, 'claim_usdc', {}, '0');
       },
     }),
     [accountId, ready, call, wallet],

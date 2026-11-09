@@ -5,7 +5,7 @@ import { ed25519 } from '@noble/curves/ed25519.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes, randomBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { attestModel, type AttestationResult, type Check } from './attestation';
-import { consultAuthMessage } from './config';
+import { cancelAuthMessage, consultAuthMessage } from './config';
 import { decryptWith, encryptTo, generateClientKeys, isHexCipher } from './crypto/e2ee';
 
 export type Stage = 'attesting' | 'encrypting' | 'signing' | 'thinking' | 'verifying' | 'done';
@@ -117,4 +117,16 @@ async function verifyResponse(chatId: string | null, model: string, raw: string,
   } catch {
     return [{ id: 'sig', label: 'The answer is signed by that same hardware', ok: false, source: 'browser', detail: 'signature not available' }];
   }
+}
+
+/** Ask the server to refund a paid, unused consult. The wallet signature proves it's yours. */
+export async function cancelConsult(consultId: number, sign: Signer): Promise<void> {
+  const nonce = randomBytes(32);
+  const s = await sign(cancelAuthMessage(consultId), nonce);
+  const res = await fetch('/api/consult/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ consultId, auth: { accountId: s.accountId, publicKey: s.publicKey, signature: s.signature, nonce: b64(nonce) } }),
+  });
+  if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? 'Refund failed');
 }
