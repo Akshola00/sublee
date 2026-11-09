@@ -1,5 +1,7 @@
 # Sublee Web — CLAUDE.md
 
+@AGENTS.md (Next.js 16.4.3: read `node_modules/next/dist/docs/` before writing route handlers or config; APIs differ from older Next.)
+
 Next.js app (UI + route handlers). Read `../docs/SPEC.md` §4, §6–8 for intent and `../docs/DESIGN.md` for anything visual. **This file wins on conflict with the spec; DESIGN.md wins on anything a user sees.**
 
 ## 0. Non-negotiables
