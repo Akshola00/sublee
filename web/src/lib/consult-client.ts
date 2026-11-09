@@ -98,7 +98,7 @@ export async function runConsult(opts: {
 }
 
 async function verifyResponse(chatId: string | null, model: string, raw: string, modelPubKey: string): Promise<Check[]> {
-  if (!chatId) return [{ id: 'sig', label: 'Answer is signed by the enclave', ok: false, source: 'browser', detail: 'no chat id' }];
+  if (!chatId) return [{ id: 'sig', label: 'The answer is signed by that same hardware', ok: false, source: 'browser', detail: 'no chat id' }];
   try {
     // Signatures can lag the stream by a moment.
     let sig: { text?: string; signature?: string } = {};
@@ -111,10 +111,10 @@ async function verifyResponse(chatId: string | null, model: string, raw: string,
     const [, resHash] = sig.text.split(':');
     const sigOk = ed25519.verify(hexToBytes(sig.signature.replace(/^0x/, '')), utf8ToBytes(sig.text), hexToBytes(modelPubKey));
     return [
-      { id: 'sig', label: 'Answer is signed by the attested enclave key', ok: sigOk, source: 'browser' },
-      { id: 'res-hash', label: 'Answer you received is exactly what the enclave signed', ok: resHash === bytesToHex(sha256(utf8ToBytes(raw))), source: 'browser' },
+      { id: 'sig', label: 'The answer is signed by that same hardware', ok: sigOk, source: 'browser' },
+      { id: 'res-hash', label: 'The answer wasn’t changed on the way back', ok: resHash === bytesToHex(sha256(utf8ToBytes(raw))), source: 'browser' },
     ];
   } catch {
-    return [{ id: 'sig', label: 'Answer is signed by the enclave', ok: false, source: 'browser', detail: 'signature not available' }];
+    return [{ id: 'sig', label: 'The answer is signed by that same hardware', ok: false, source: 'browser', detail: 'signature not available' }];
   }
 }

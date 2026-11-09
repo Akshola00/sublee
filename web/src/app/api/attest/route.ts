@@ -28,13 +28,13 @@ export async function POST(req: Request) {
     const r = js_verify(quote, collateral, BigInt(Math.floor(Date.now() / 1000))) as { status?: string };
     checks.push({
       id: 'tdx',
-      label: 'Intel TDX hardware signature is genuine',
+      label: 'Intel confirms the hardware is genuine',
       ok: TDX_OK.has(r.status ?? ''),
       source: 'server',
       detail: `TCB status: ${r.status}`,
     });
   } catch {
-    checks.push({ id: 'tdx', label: 'Intel TDX hardware signature is genuine', ok: false, source: 'server', detail: 'quote did not verify' });
+    checks.push({ id: 'tdx', label: 'Intel confirms the hardware is genuine', ok: false, source: 'server', detail: 'quote did not verify' });
   }
 
   if (nvidia_payload) {
@@ -50,13 +50,13 @@ export async function POST(req: Request) {
       const verdict = claims['x-nvidia-overall-att-result'];
       checks.push({
         id: 'gpu',
-        label: 'NVIDIA GPU is a genuine confidential-computing GPU',
+        label: 'NVIDIA confirms the AI chip is genuine',
         ok: verdict === true || verdict === 'true',
         source: 'server',
         detail: 'Verified by NVIDIA Remote Attestation Service',
       });
     } catch {
-      checks.push({ id: 'gpu', label: 'NVIDIA GPU is a genuine confidential-computing GPU', ok: false, source: 'server', detail: 'NVIDIA verifier unreachable' });
+      checks.push({ id: 'gpu', label: 'NVIDIA confirms the AI chip is genuine', ok: false, source: 'server', detail: 'NVIDIA verifier unreachable' });
     }
   }
 

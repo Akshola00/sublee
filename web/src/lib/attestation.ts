@@ -44,20 +44,20 @@ export function bindingChecks(att: ModelAttestation, nonce: string): Check[] {
   try {
     rd = reportDataFromQuote(att.intel_quote);
   } catch (e) {
-    checks.push({ id: 'quote', label: 'Enclave quote is well-formed', ok: false, source: 'browser', detail: String(e) });
+    checks.push({ id: 'quote', label: 'The hardware proof is readable', ok: false, source: 'browser', detail: String(e) });
     return checks;
   }
   const key = att.signing_public_key.toLowerCase();
   const padded = key.padEnd(64, '0');
   checks.push({
     id: 'key-binding',
-    label: 'Encryption key is sealed inside the enclave quote',
+    label: 'The lock we use belongs to the sealed hardware',
     ok: bytesToHex(rd.subarray(0, 32)) === padded && att.signing_algo === 'ed25519' && key.length === 64,
     source: 'browser',
   });
   checks.push({
     id: 'nonce',
-    label: 'Quote is fresh (contains our random challenge)',
+    label: 'Its proof is fresh, made just now for you',
     ok: bytesToHex(rd.subarray(32, 64)) === nonce.toLowerCase(),
     source: 'browser',
   });
@@ -66,7 +66,7 @@ export function bindingChecks(att: ModelAttestation, nonce: string): Check[] {
     try {
       gpuNonce = String(JSON.parse(att.nvidia_payload).nonce ?? '').toLowerCase();
     } catch {}
-    checks.push({ id: 'gpu-nonce', label: 'GPU evidence answers our challenge', ok: gpuNonce === nonce, source: 'browser' });
+    checks.push({ id: 'gpu-nonce', label: 'The AI chip answered the same fresh challenge', ok: gpuNonce === nonce, source: 'browser' });
   }
   return checks;
 }
@@ -92,7 +92,7 @@ export async function attestModel(model: string): Promise<AttestationResult> {
     const server = (await s.json()) as { checks?: Check[] };
     checks.push(...(server.checks ?? []));
   } catch {
-    checks.push({ id: 'tdx', label: 'Intel TDX signature chain', ok: false, source: 'server', detail: 'verifier unreachable' });
+    checks.push({ id: 'tdx', label: 'Intel confirms the hardware is genuine', ok: false, source: 'server', detail: 'verifier unreachable' });
   }
   return {
     model,
