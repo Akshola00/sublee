@@ -54,6 +54,7 @@ pub enum PayMethod {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ConsultStatus {
     Paid,
+    Claimed,
     Used,
     Refunded,
 }
@@ -75,6 +76,7 @@ pub struct Prompt {
 }
 
 #[near(serializers = [borsh, json])]
+#[derive(Clone)]
 pub struct Consult {
     pub id: u64,
     pub patient_id: AccountId,
@@ -128,6 +130,8 @@ pub struct Earnings {
 pub enum Event {
     #[event_version("1.0.0")]
     ConsultPaid { consult_id: u64, token_id: TokenId, patient_id: AccountId, method: PayMethod, amount: U128 },
+    #[event_version("1.0.0")]
+    ConsultClaimed { consult_id: u64 },
     #[event_version("1.0.0")]
     ConsultUsed { consult_id: u64, token_id: TokenId, owner_id: AccountId, owner_share: U128 },
     #[event_version("1.0.0")]
@@ -353,11 +357,22 @@ impl Contract {
         true
     }
 
+    /// Atomically lock a paid consult before inference so one payment buys exactly one answer.
+    pub fn claim(&mut self, consult_id: u64) -> Consult {
+        self.assert_server();
+        let c = self.consults.get_mut(&consult_id).unwrap_or_else(|| env::panic_str("Unknown consult"));
+        require!(c.status == ConsultStatus::Paid, "Consult is not in Paid state");
+        c.status = ConsultStatus::Claimed;
+        let out = c.clone();
+        Event::ConsultClaimed { consult_id }.emit();
+        out
+    }
+
     /// Inference succeeded: release escrow to the current NFT owner (85%) and treasury (15%).
     pub fn mark_used(&mut self, consult_id: u64) {
         self.assert_server();
         let c = self.consults.get_mut(&consult_id).unwrap_or_else(|| env::panic_str("Unknown consult"));
-        require!(c.status == ConsultStatus::Paid, "Consult is not in Paid state");
+        require!(c.status == ConsultStatus::Claimed, "Consult is not claimed");
         c.status = ConsultStatus::Used;
         let (token_id, method, amount) = (c.token_id.clone(), c.method, c.amount.0);
         let owner = self.nft_owner(&token_id);
@@ -392,7 +407,7 @@ impl Contract {
     pub fn refund(&mut self, consult_id: u64) {
         self.assert_server();
         let c = self.consults.get_mut(&consult_id).unwrap_or_else(|| env::panic_str("Unknown consult"));
-        require!(c.status == ConsultStatus::Paid, "Consult is not in Paid state");
+        require!(matches!(c.status, ConsultStatus::Paid | ConsultStatus::Claimed), "Consult is not refundable");
         c.status = ConsultStatus::Refunded;
         let (patient, method, amount) = (c.patient_id.clone(), c.method, c.amount.0);
         match method {

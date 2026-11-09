@@ -106,6 +106,7 @@ fn pay_near_escrows_then_releases() {
     assert!(get_logs().iter().any(|l| l.contains("consult_paid")));
 
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     assert_eq!(c.get_consult(cid).unwrap().status, ConsultStatus::Used);
     assert_eq!(c.get_prompt(id).unwrap().uses, 1);
@@ -138,29 +139,32 @@ fn mark_used_is_server_only() {
     ctx("patient.testnet", ONE_NEAR);
     let cid = c.pay_consult_near(id);
     ctx("patient.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
 }
 
 #[test]
-#[should_panic(expected = "not in Paid state")]
+#[should_panic(expected = "not claimed")]
 fn double_mark_used_panics() {
     let mut c = setup();
     let id = mint(&mut c, "author.testnet", ONE_NEAR, 0, 0);
     ctx("patient.testnet", ONE_NEAR);
     let cid = c.pay_consult_near(id);
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     c.mark_used(cid);
 }
 
 #[test]
-#[should_panic(expected = "not in Paid state")]
+#[should_panic(expected = "not refundable")]
 fn refund_after_used_panics() {
     let mut c = setup();
     let id = mint(&mut c, "author.testnet", ONE_NEAR, 0, 0);
     ctx("patient.testnet", ONE_NEAR);
     let cid = c.pay_consult_near(id);
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     c.refund(cid);
 }
@@ -179,6 +183,7 @@ fn fiat_credit_is_idempotent_and_spendable() {
     assert_eq!(c.fiat_balance_of(acc("patient.testnet")).0, 500);
 
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     assert_eq!(c.earnings_of(acc("author.testnet")).cents.0, 425);
     assert_eq!(c.earnings_of(acc("treasury.testnet")).cents.0, 75);
@@ -218,6 +223,7 @@ fn usdc_payment_returns_excess_and_accrues_on_use() {
     }
     let cid = c.consults_for(acc("patient.testnet"), None, None)[0].id;
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     assert_eq!(c.earnings_of(acc("author.testnet")).usdc.0, 1_700_000);
     assert_eq!(c.earnings_of(acc("treasury.testnet")).usdc.0, 300_000);
@@ -243,6 +249,7 @@ fn royalties_follow_the_current_owner() {
     ctx("patient.testnet", 0);
     let cid = c.pay_consult_credit(id);
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     assert_eq!(c.earnings_of(acc("buyer.testnet")).cents.0, 850);
     assert_eq!(c.earnings_of(acc("author.testnet")).cents.0, 0);
@@ -255,6 +262,7 @@ fn rating_once_by_patient_after_use() {
     ctx("patient.testnet", ONE_NEAR);
     let cid = c.pay_consult_near(id.clone());
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     ctx("patient.testnet", 0);
     c.rate(cid, 4);
@@ -270,6 +278,7 @@ fn cannot_rate_twice() {
     ctx("patient.testnet", ONE_NEAR);
     let cid = c.pay_consult_near(id);
     ctx("server.testnet", 0);
+    c.claim(cid);
     c.mark_used(cid);
     ctx("patient.testnet", 0);
     c.rate(cid, 4);
@@ -315,4 +324,40 @@ fn inactive_prompt_cannot_be_paid() {
     c.update_prompt(id.clone(), None, None, None, Some(false), None);
     ctx("patient.testnet", ONE_NEAR);
     c.pay_consult_near(id);
+}
+
+#[test]
+#[should_panic(expected = "not in Paid state")]
+fn claim_is_single_use() {
+    let mut c = setup();
+    let id = mint(&mut c, "author.testnet", ONE_NEAR, 0, 0);
+    ctx("patient.testnet", ONE_NEAR);
+    let cid = c.pay_consult_near(id);
+    ctx("server.testnet", 0);
+    c.claim(cid);
+    c.claim(cid);
+}
+
+#[test]
+fn claimed_consult_can_be_refunded() {
+    let mut c = setup();
+    let id = mint(&mut c, "author.testnet", ONE_NEAR, 0, 0);
+    ctx("patient.testnet", ONE_NEAR);
+    let cid = c.pay_consult_near(id);
+    ctx("server.testnet", 0);
+    let claimed = c.claim(cid);
+    assert_eq!(claimed.patient_id, acc("patient.testnet"));
+    c.refund(cid);
+    assert_eq!(c.get_consult(cid).unwrap().status, ConsultStatus::Refunded);
+}
+
+#[test]
+#[should_panic(expected = "not claimed")]
+fn mark_used_requires_claim() {
+    let mut c = setup();
+    let id = mint(&mut c, "author.testnet", ONE_NEAR, 0, 0);
+    ctx("patient.testnet", ONE_NEAR);
+    let cid = c.pay_consult_near(id);
+    ctx("server.testnet", 0);
+    c.mark_used(cid);
 }

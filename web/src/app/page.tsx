@@ -1,69 +1,38 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { listPrompts, formatCents, formatNear, rating } from '@/lib/chain';
+
+async function Specialists() {
+  const prompts = (await listPrompts()).filter((p) => p.active);
+  return (
+    <>
+      {prompts.map((p) => (
+        <Link key={p.token_id} href={`/specialist/${p.token_id}`} style={{ textDecoration: 'none' }}>
+          <div className="card">
+            <strong>{p.metadata?.title}</strong>
+            <div className="muted">{p.metadata?.description}</div>
+            <div className="muted">
+              {p.specialty} · {formatNear(p.price_near)} NEAR / ${formatCents(p.price_cents)} · ★ {rating(p)} · {p.uses} consults
+            </div>
+          </div>
+        </Link>
+      ))}
+    </>
+  );
+}
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <>
+      <h1>A second opinion that even we can’t read.</h1>
+      <p className="muted">
+        Your case is encrypted in your browser to a key that only exists inside a verified hardware enclave running the AI.
+        Specialist prompts are NFTs: their authors earn every time they help someone.
+      </p>
+      <h2>Specialists</h2>
+      <Suspense fallback={<p className="muted">Loading specialists from NEAR…</p>}>
+        <Specialists />
+      </Suspense>
+    </>
   );
 }
