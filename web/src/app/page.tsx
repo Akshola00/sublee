@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { connection } from 'next/server';
 import { listPrompts, formatCents, formatNear, rating } from '@/lib/chain';
 
 async function Specialists() {
+  await connection(); // live chain data, rendered per request
   const prompts = (await listPrompts()).filter((p) => p.active);
   return (
     <>
