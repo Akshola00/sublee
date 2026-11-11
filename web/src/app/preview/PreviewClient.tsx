@@ -3,6 +3,10 @@ import { TrustCard } from '@/components/TrustCard';
 import { OpinionView } from '@/components/OpinionView';
 import type { AttestationResult } from '@/lib/attestation';
 import type { Opinion } from '@/lib/schema';
+import { useEffect } from 'react';
+import { RateConsult } from '@/components/RateConsult';
+import { extractText } from '@/lib/extract';
+import * as history from '@/lib/history';
 
 const att: AttestationResult = {
   model: 'z-ai/glm-5.3-flash', nonce: '7f3a19c0d2e4b6a8'.repeat(4), modelPubKey: '5a0210f2442c'.padEnd(64, 'a'), verified: true, fetchedAt: 1794262000000,
@@ -30,11 +34,16 @@ const opinion: Opinion = {
 };
 
 export function PreviewClient() {
+  // Dev-only hooks so the browser checks can exercise PDF extraction and the encrypted history store.
+  useEffect(() => {
+    (window as unknown as { __subleeTest: unknown }).__subleeTest = { extractText, history };
+  }, []);
   return (
     <div className="wrap section stack">
       <h1>Design preview</h1>
       <TrustCard att={att} resChecks={[{ id: 'sig', label: 'The answer is signed by that same hardware', ok: true, source: 'browser' }, { id: 'res-hash', label: 'The answer wasn’t changed on the way back', ok: true, source: 'browser' }]} stage="done" />
       <OpinionView o={opinion} specialist="General practice second look" />
+      <RateConsult consultId={0} />
       <OpinionView o={{ ...opinion, urgency: 'emergency', urgency_reason: 'Chest pain with sweating and breathlessness can be a heart attack.' }} specialist="Cardiology consult" />
     </div>
   );

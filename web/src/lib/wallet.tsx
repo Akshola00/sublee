@@ -18,6 +18,7 @@ type Ctx = {
   mintPrompt: (args: MintArgs) => Promise<string>;
   updatePrompt: (args: UpdateArgs) => Promise<void>;
   claimUsdc: () => Promise<void>;
+  rate: (consultId: number, stars: number) => Promise<void>;
 };
 
 export type MintArgs = {
@@ -143,6 +144,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       },
       claimUsdc: async () => {
         await call(CONTRACT_ID, 'claim_usdc', {}, '0');
+      },
+      rate: async (consultId, stars) => {
+        await call(CONTRACT_ID, 'rate', { consult_id: consultId, rating: stars }, '0');
       },
     }),
     [accountId, ready, call, wallet],

@@ -110,6 +110,8 @@ export async function POST(req: Request) {
   if (!upstream.ok || !upstream.body) {
     const status = upstream.status;
     after(() => settle(false));
+    // 402 = Sublee's NEAR AI account is out of credits. Tell the client so it can explain (and offer a labelled sample).
+    if (status === 402) return Response.json({ error: 'Sublee’s AI credits have run out, so the enclave couldn’t answer. You have been refunded.', code: 'no_credits' }, { status: 402 });
     return fail(502, `enclave error ${status} — you have been refunded`);
   }
 

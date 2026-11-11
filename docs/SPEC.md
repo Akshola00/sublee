@@ -150,6 +150,10 @@ balances: patient_id -> fiat credit (USD cents)   // credited by server after St
 | `GET /api/signature/[chatId]` | Proxies the enclave's response signature (needs our API key); the browser verifies it. |
 | `POST /api/stripe/checkout` | Creates a Checkout Session (test mode) for N consult credits |
 | `POST /api/stripe/webhook` | On `checkout.session.completed` → `credit_fiat` (idempotent) |
+| `POST /api/stripe/confirm` | On return from Checkout: reads the session from Stripe and credits it (idempotent with the webhook, so it works without a webhook locally) |
+| `GET /api/credit/mode` · `POST /api/credit/test` | Without a Stripe key (testnet only): a labelled $5 test credit, once per account per day. No money moves. |
+
+When NEAR AI returns 402 (out of credits), `/api/consult` refunds and returns `code: no_credits`; the client may show an example answer written in advance, always labelled as not generated and never saved or signed.
 
 Secrets live in env only: `NEARAI_API_KEY`, `PROMPT_SEAL_SECRET`, `SERVER_ACCOUNT_ID`, `SERVER_PRIVATE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CONTRACT_ID`.
 

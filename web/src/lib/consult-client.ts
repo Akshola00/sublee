@@ -19,6 +19,13 @@ export type ConsultRun = {
 
 type Signer = (message: string, nonce: Uint8Array) => Promise<{ accountId: string; publicKey: string; signature: string }>;
 
+/** Error from the consult server, with a machine-readable code when there is one. */
+export class ConsultError extends Error {
+  constructor(message: string, public code?: string) {
+    super(message);
+  }
+}
+
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
 
 export async function runConsult(opts: {
@@ -56,8 +63,8 @@ export async function runConsult(opts: {
     }),
   });
   if (!res.ok || !res.body) {
-    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(err.error ?? 'Consult failed');
+    const err = (await res.json().catch(() => ({ error: `HTTP ${res.status}` }))) as { error?: string; code?: string };
+    throw new ConsultError(err.error ?? 'Consult failed', err.code);
   }
 
   // Decrypt each SSE delta as it arrives; keep the raw bytes to check the enclave's signature.

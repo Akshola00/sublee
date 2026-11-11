@@ -15,7 +15,8 @@ export function Header() {
         </Link>
         <nav className="row" style={{ gap: 6 }}>
           <Link href="/create" className="btn btn-ghost btn-sm nav-hide-sm">For experts</Link>
-          {ready && accountId && <Link href="/me" className="btn btn-ghost btn-sm">My specialists</Link>}
+          {ready && accountId && <Link href="/history" className="btn btn-ghost btn-sm">History</Link>}
+          {ready && accountId && <Link href="/me" className="btn btn-ghost btn-sm nav-hide-sm">My specialists</Link>}
           {!ready ? null : accountId ? (
             <button className="btn btn-secondary btn-sm" onClick={disconnect} title={`Signed in as ${accountId}`}>
               <span className="nav-hide-sm">{short(accountId)} · </span>Sign out
