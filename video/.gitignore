@@ -1,0 +1,7 @@
+.venv/
+node_modules/
+renders/
+recordings/
+snaps/
+assets/music/
+*.wav
