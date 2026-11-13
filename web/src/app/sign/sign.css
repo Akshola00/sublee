@@ -1,0 +1,35 @@
+/* Sublee's dark tokens for the Privy sign popup. The plugin's defaults mix in white (made for light pages). */
+html .pnc-root {
+  --pnc-page-background: var(--bg);
+  --pnc-page-background-image: radial-gradient(circle at top, rgba(111, 227, 193, 0.08), transparent 40%);
+  --pnc-surface-background: var(--surface);
+  --pnc-surface-strong-background: var(--surface-2);
+  --pnc-surface-muted-background: var(--surface);
+  --pnc-summary-row-background: var(--bg-2);
+  --pnc-summary-row-alt-background: var(--surface-2);
+  --pnc-accent-soft-background: rgba(111, 227, 193, 0.1);
+  --pnc-accent-soft-color: var(--teal);
+  --default-font-family: var(--font-sans), system-ui, sans-serif;
+  color: var(--ink);
+}
+html .pnc-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html .pnc-card__body,
+html .pnc-card__footer {
+  background: transparent;
+}
+html .pnc-action-button--primary {
+  background: var(--teal) !important;
+  color: var(--on-teal) !important;
+  font-weight: 600 !important;
+}
+html .pnc-action-button--secondary {
+  background: transparent !important;
+  color: var(--ink) !important;
+  box-shadow: inset 0 0 0 1px var(--line-2) !important;
+}
+html .pnc-approval__origin {
+  box-shadow: inset 0 0 0 1px rgba(111, 227, 193, 0.25) !important;
+}

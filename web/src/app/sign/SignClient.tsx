@@ -1,6 +1,7 @@
 'use client';
 import '@radix-ui/themes/styles.css';
 import '@peerfolio/privy-near-connect/sign-page-plugin/theme.css';
+import './sign.css';
 import { useEffect, useState } from 'react';
 import { SignPagePlugin, type SignPageProps } from '@peerfolio/privy-near-connect/sign-page-plugin';
 import { RPC_URL } from '@/lib/config';
