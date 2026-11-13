@@ -5,13 +5,13 @@ import Privy, { LocalStorage, create as createWallet } from '@privy-io/js-sdk-co
 
 export const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '';
 export const PRIVY_CLIENT_ID = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID ?? '';
-export const privyEnabled = () => !!(PRIVY_APP_ID && PRIVY_CLIENT_ID);
+export const privyEnabled = () => !!PRIVY_APP_ID;
 export const PRIVY_WALLET_ID = 'sublee-email';
 
 let client: Privy | null = null;
 export function privy(): Privy {
   if (!privyEnabled()) throw new Error('Email sign-in isn’t set up yet.');
-  client ??= new Privy({ appId: PRIVY_APP_ID, clientId: PRIVY_CLIENT_ID, storage: new LocalStorage() });
+  client ??= new Privy({ appId: PRIVY_APP_ID, clientId: PRIVY_CLIENT_ID || undefined, storage: new LocalStorage() });
   return client;
 }
 
