@@ -1,6 +1,6 @@
 # Sublee: Design Specification
 
-**Direction:** Clinical calm (owner's pick, 2026-11-09) · **Platform:** responsive web, mobile-first (360–430px primary, up to 1040px desktop)
+**Direction:** Sealed room, dark (owner's call, 2026-11-13; replaces "clinical calm" light) · **Platform:** responsive web, mobile-first (360–430px primary, up to 1040px desktop)
 **Authoritative for everything a user sees.** `docs/SPEC.md` wins on what the system does.
 
 ---
@@ -13,13 +13,12 @@
 
 ## 1. Feel
 
-A quiet, well-run clinic, not a crypto app. The page stays still, the type is unhurried, there's lots of white space, and colour is used for meaning. Think "a doctor's letter on good paper, delivered by a calm app".
+A private room at night: dark, quiet and precise, with one mint accent that means "sealed" or "safe to go". The home page is alive (a case card that really encrypts as you watch, a scroll story that follows your case, pills that track where you are). The patient flow stays calm and still.
 
 What it must not look like:
-- Dark mode by default, neon, gradients, glowing "secure" shields, padlock spam.
-- Purple-to-blue AI gradients, sparkle icons, "✨ AI-powered".
+- Purple-to-blue AI gradients, sparkle icons, "✨ AI-powered", padlock spam.
+- Stock-photo doctors or photo-real faces for fictional specialists (illustrated portraits only; an author may add their own photo).
 - Dashboards full of numbers in the patient flow.
-- Stock-photo doctors, stethoscope clip-art.
 
 ## 2. Vocabulary (patient-facing; code names on the right)
 
@@ -47,40 +46,41 @@ Errors say what happened and what happens next, with money first: "The specialis
 
 ## 4. Tokens
 
+Source of truth: `web/src/app/globals.css` `:root`.
+
 ### Colour
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#F4FAF8` | Page background (mint-tinted white) |
-| `--surface` | `#FFFFFF` | Cards |
-| `--ink` | `#0E2A24` | Primary text |
-| `--ink-2` | `#4D635D` | Secondary text |
-| `--ink-3` | `#7D918B` | Captions, metadata |
-| `--line` | `#DCE9E4` | Hairlines, card borders |
-| `--teal` | `#0F6E56` | Primary action, links, ticks |
-| `--teal-2` | `#E1F5EE` | Teal tint backgrounds, selected states |
-| `--teal-ink` | `#085041` | Text on teal tint |
-| `--amber` / `--amber-2` | `#854F0B` / `#FAEEDA` | Urgency "soon"/"urgent" |
-| `--red` / `--red-2` | `#A32D2D` / `#FCEBEB` | Emergency, failed checks, errors |
+| `--bg` / `--bg-2` | `#070B0B` / `#0B1212` | Page, inset fields |
+| `--surface` / `--surface-2` | `#0F1716` / `#142020` | Cards, raised controls |
+| `--ink` / `--ink-2` / `--ink-3` | `#E9F2EF` / `#A5B6B1` / `#6F827C` | Text, secondary, captions |
+| `--line` / `--line-2` | `#1F2D2B` / `#2B3D3A` | Hairlines, control borders |
+| `--teal` (mint) | `#6FE3C1` | Primary action (dark text `#04211A` on it), links, ticks, "sealed" |
+| `--amber` | `#F3C27A` | Urgency soon/urgent, example-answer banner |
+| `--red` | `#FF8A80` | Emergency, failed checks, errors |
 
-Teal is the only accent. Amber and red appear **only** for urgency and failure.
+Mint is the only accent. Amber and red appear only for urgency, examples and failure. Glow is reserved for "verified/sealed" states and the primary button hover.
 
 ### Type
 
-- Headlines: **Fraunces** (serif, opsz), weight 500, `--font-serif`. Used for h1/h2 and the opinion summary.
-- Everything else: **Inter**, 400/500/600, `--font-sans`. Mono (`ui-monospace`) only inside the trust panel.
-- Scale: h1 34/40 (28/34 mobile), h2 24/30, h3 17/24 sans 600, body 16/26, small 14/22, caption 12.5/18.
+- **Instrument Sans** (`--font-sans`) for everything; headlines 600 with tight tracking.
+- **Instrument Serif italic** (`--font-serif`) for one accent word per headline ("yours.", "sealed") and the opinion summary.
+- **JetBrains Mono** (`--font-mono`) for section labels (`── how it works`), ciphertext and machine details.
 
 ### Shape and space
 
-- Radius: cards 16px, inputs 12px, buttons pill (999px), chips 999px.
-- Card: white, 1px `--line`, no shadow; padding 20px (16px mobile).
-- Spacing: 4px base; section gaps 32/48px.
-- Max content width 720px for flows, 1040px for the specialist grid.
+- Radius: cards 18px, inputs 12px, buttons and chips pill.
+- Cards: subtle top-to-bottom surface gradient, 1px `--line`; hover lifts 3px with a mint glow.
+- Max width 740px for flows, 1120px for the home page.
 
 ### Motion
 
-Small and functional only: 150ms colour/opacity transitions, check items fading in as they pass, a gentle pulse on the "thinking" indicator. No page transitions, no bouncing.
+Home page: headline lines rise in, sections reveal on scroll, the case card floats, tilts with the pointer and loops type → real encryption → sealed; the "where your case goes" track fills as you scroll. Flow pages: 150ms transitions and fades only. Everything respects `prefers-reduced-motion`.
+
+### Logo
+
+Two overlapping circles (your view and a second opinion); the lens where they meet is filled mint: the sealed space where your case is read. Wordmark "sublee" in lowercase Instrument Sans 600. Source: `web/src/components/Logo.tsx`, favicon `web/src/app/icon.svg`.
 
 ## 5. Components
 

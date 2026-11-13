@@ -1,12 +1,7 @@
 import Link from 'next/link';
 import type { PromptView } from '@/lib/types';
 import { formatCents, rating } from '@/lib/chain';
-
-export const monogram = (specialty: string) => {
-  const words = specialty.split(/[-\s]+/).filter(Boolean);
-  const m = words.length > 1 ? words[0]![0]! + words[1]![0]! : (words[0] ?? 'Sp').slice(0, 2);
-  return m.toUpperCase();
-};
+import { avatarFor } from '@/lib/avatar';
 
 export const specialtyLabel = (s: string) => s.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 
@@ -22,7 +17,8 @@ export function SpecialistCard({ p }: { p: PromptView }) {
     <Link href={`/specialist/${p.token_id}`} className="card card-link">
       <div className="spec-card">
         <div className="row" style={{ flexWrap: 'nowrap' }}>
-          <div className="monogram" aria-hidden>{monogram(p.specialty)}</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="avatar" src={avatarFor(p)} alt="" width={48} height={48} />
           <div>
             <h3 style={{ margin: 0 }}>{p.metadata?.title}</h3>
             <div className="caption">{specialtyLabel(p.specialty)}</div>
@@ -32,7 +28,7 @@ export function SpecialistCard({ p }: { p: PromptView }) {
         <div className="spec-meta">
           <span>★ {rating(p)}</span>
           <span>{p.uses} {p.uses === 1 ? 'consult' : 'consults'}</span>
-          <span style={{ marginLeft: 'auto', color: 'var(--ink)' }}>from {fromPrice(p)}</span>
+          <span style={{ marginLeft: 'auto', color: 'var(--ink)' }}>from {fromPrice(p)} <span className="arrow" aria-hidden>→</span></span>
         </div>
       </div>
     </Link>

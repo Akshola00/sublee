@@ -10,7 +10,8 @@ import { caseToMessage, parseOpinion, type CaseInput, type Opinion } from '@/lib
 import type { PromptView } from '@/lib/types';
 import { SAMPLE_CASES } from '@/lib/sample-cases';
 import { sampleOpinionFor } from '@/lib/sample-opinions';
-import { monogram, specialtyLabel } from './SpecialistCard';
+import { specialtyLabel } from './SpecialistCard';
+import { avatarFor } from '@/lib/avatar';
 import { OpinionView } from './OpinionView';
 import { SaveToHistory } from './SaveToHistory';
 import { extractText } from '@/lib/extract';
@@ -148,7 +149,8 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
         </div>
       )}
       <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start', gap: 16 }}>
-        <div className="monogram lg" aria-hidden>{monogram(prompt.specialty)}</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="avatar lg" src={avatarFor(prompt)} alt="" width={72} height={72} />
         <div>
           <div className="caption">{specialtyLabel(prompt.specialty)}</div>
           <h1 style={{ margin: '2px 0 6px' }}>{prompt.metadata?.title}</h1>

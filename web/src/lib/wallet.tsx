@@ -42,7 +42,7 @@ export type UpdateArgs = {
 };
 
 /** Storage deposit for minting; the contract refunds whatever isn't used. */
-const MINT_DEPOSIT = '100000000000000000000000'; // 0.1 NEAR
+const MINT_DEPOSIT = '200000000000000000000000'; // 0.2 NEAR (covers an optional ~10 KB photo)
 
 function logsOf(outcome: Outcome): string[] {
   return (outcome as { receipts_outcome?: { outcome: { logs: string[] } }[] }).receipts_outcome?.flatMap((r) => r.outcome.logs) ?? [];

@@ -5,6 +5,7 @@ import { useWallet } from '@/lib/wallet';
 import { E2EE_MODELS } from '@/lib/config';
 import { sealPrompt } from '@/lib/crypto/seal';
 import { dollarsToCents, nearToYocto, usdcToUnits } from '@/lib/units';
+import { toAvatarDataUrl } from '@/lib/image';
 
 const MODEL_LABELS: Record<string, string> = {
   'z-ai/glm-5.3-flash': 'GLM 5.3 Flash · fast, reads images (recommended)',
@@ -37,6 +38,7 @@ export function CreateForm() {
     prompt: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState<'seal' | 'mint' | null>(null);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -67,7 +69,7 @@ export function CreateForm() {
       const tokenId = await w.mintPrompt({
         title: f.title.trim(),
         description: f.description.trim(),
-        media: null,
+        media: photo,
         specialty: f.specialty.trim().toLowerCase().replace(/\s+/g, '-'),
         model: f.model,
         sealed_prompt: sealed,
@@ -85,6 +87,31 @@ export function CreateForm() {
     <div className="stack" style={{ marginTop: 24 }}>
       <div className="card stack">
         <h2 style={{ marginBottom: 0 }}>What patients see</h2>
+        <div className="row" style={{ gap: 14, flexWrap: 'nowrap' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="avatar lg" src={photo ?? '/avatars/0.svg'} alt="" width={72} height={72} />
+          <div className="stack" style={{ gap: 6 }}>
+            <label className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
+              {photo ? 'Change photo' : 'Add your photo'}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  try {
+                    setPhoto(await toAvatarDataUrl(file));
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : String(err));
+                  }
+                }}
+              />
+            </label>
+            <span className="caption">{photo ? <button type="button" className="btn btn-ghost btn-sm" style={{ padding: 0, minHeight: 0 }} onClick={() => setPhoto(null)}>Use an illustration instead</button> : 'Optional. Without one, patients see an illustration. It’s public on-chain.'}</span>
+          </div>
+        </div>
         <label className="field"><span>Title</span>
           <input value={f.title} onChange={set('title')} placeholder="Thyroid results explained" maxLength={120} />
         </label>
@@ -133,7 +160,7 @@ export function CreateForm() {
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="spread">
-        <span className="caption">Minting costs a small storage deposit (up to 0.1 NEAR); the unused part comes back.</span>
+        <span className="caption">Minting costs a small storage deposit (up to 0.2 NEAR); the unused part comes back.</span>
         <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={mint} aria-busy={!!busy} disabled={!!busy}>
           {busy === 'seal' ? 'Sealing…' : busy === 'mint' ? 'Confirm in your wallet…' : w.accountId ? 'Seal and mint' : 'Connect wallet to mint'}
         </button>

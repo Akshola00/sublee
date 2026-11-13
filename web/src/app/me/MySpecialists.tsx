@@ -5,7 +5,7 @@ import { useWallet } from '@/lib/wallet';
 import { formatCents, formatNear, formatUsdc, listPrompts, rating, viewCall } from '@/lib/chain';
 import { dollarsToCents, nearToYocto, usdcToUnits } from '@/lib/units';
 import type { PromptView } from '@/lib/types';
-import { monogram } from '@/components/SpecialistCard';
+import { avatarFor } from '@/lib/avatar';
 
 type Earnings = { usdc: string; cents: string };
 
@@ -147,7 +147,8 @@ function MineRow({ p, onSaved }: { p: PromptView; onSaved: () => Promise<void> }
   return (
     <div className="card stack">
       <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
-        <div className="monogram" aria-hidden>{monogram(p.specialty)}</div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="avatar" src={avatarFor(p)} alt="" width={48} height={48} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="spread">
             <Link href={`/specialist/${p.token_id}`}><h3 style={{ margin: 0 }}>{p.metadata?.title}</h3></Link>
