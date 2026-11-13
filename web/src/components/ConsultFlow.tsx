@@ -184,6 +184,7 @@ export function ConsultFlow({ prompt }: { prompt: PromptView }) {
           )}
         </div>
       )}
+      {noCredits && att && step < 2 && <TrustCard att={att} resChecks={resChecks} stage={stage} />}
       {sample && (
         <div className="stack" style={{ marginBottom: 14 }}>
           <div className="notice notice-warn" role="note">

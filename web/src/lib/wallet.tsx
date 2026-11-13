@@ -4,6 +4,7 @@ import type { NearConnector } from '@hot-labs/near-connect';
 import { CONTRACT_ID, NETWORK, USDC_ID } from './config';
 import { privyEnabled, privyManifest } from './privy';
 import { SignInDialog } from '@/components/SignInDialog';
+import { devWallet, injectedDevWallet } from './dev-wallet';
 
 type Wallet = Awaited<ReturnType<NearConnector['wallet']>>;
 type Outcome = Awaited<ReturnType<Wallet['signAndSendTransaction']>>;
@@ -85,10 +86,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
+  const dev = useRef<ReturnType<typeof devWallet> | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
+      const injected = injectedDevWallet();
+      if (injected) {
+        dev.current = devWallet(injected);
+        setAccountId(injected.accountId);
+        setReady(true);
+        return;
+      }
       const { NearConnector } = await import('@hot-labs/near-connect');
       const c = new NearConnector({ network: NETWORK, autoConnect: true, signIn: { contractId: CONTRACT_ID, methodNames: [] } });
       connector.current = c;
@@ -110,6 +119,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const wallet = useCallback(async () => {
+    if (dev.current) return dev.current as unknown as Wallet;
     if (!connector.current) throw new Error('Wallet not ready');
     return connector.current.wallet();
   }, []);
