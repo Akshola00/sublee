@@ -5,3 +5,12 @@ recordings/
 snaps/
 assets/music/
 *.wav
+assets/mix_raw.wav
+assets/mix.wav
+assets/voice.wav
+assets/vo/
+events.json
+snaps*/
+.hyperframes/
+stills/*.png
+assets/sfx/*.mp3

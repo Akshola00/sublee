@@ -1,0 +1,14 @@
+{
+  "name": "sublee-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "hyperframes check",
+    "render": "hyperframes render -o renders/demo.mp4"
+  },
+  "devDependencies": {
+    "gsap": "3.15.0",
+    "hyperframes": "0.8.217",
+    "playwright": "1.64.1"
+  }
+}
