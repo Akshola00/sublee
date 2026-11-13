@@ -2,6 +2,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { NearConnector } from '@hot-labs/near-connect';
 import { CONTRACT_ID, NETWORK, USDC_ID } from './config';
+import { privyEnabled, privyManifest } from './privy';
+import { SignInDialog } from '@/components/SignInDialog';
 
 type Wallet = Awaited<ReturnType<NearConnector['wallet']>>;
 type Outcome = Awaited<ReturnType<Wallet['signAndSendTransaction']>>;
@@ -9,7 +11,10 @@ type Outcome = Awaited<ReturnType<Wallet['signAndSendTransaction']>>;
 type Ctx = {
   accountId: string | null;
   ready: boolean;
+  /** Open sign-in (email or a NEAR wallet). */
   connect: () => Promise<void>;
+  /** Open the NEAR wallet picker, or go straight to one wallet by its manifest id. */
+  connectWallet: (walletId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
   payNear: (tokenId: string, yocto: string) => Promise<number>;
   payUsdc: (tokenId: string, units: string) => Promise<number>;
@@ -79,6 +84,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connector = useRef<NearConnector | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -86,6 +92,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const { NearConnector } = await import('@hot-labs/near-connect');
       const c = new NearConnector({ network: NETWORK, autoConnect: true, signIn: { contractId: CONTRACT_ID, methodNames: [] } });
       connector.current = c;
+      // Email sign-in (Privy) appears as one more wallet next to the usual NEAR wallets.
+      if (privyEnabled()) {
+        void c.whenManifestLoaded.then(() => c.registerWallet(privyManifest(window.location.origin) as never)).catch(() => {});
+      }
       c.on('wallet:signIn', (p) => setAccountId(p.accounts[0]?.accountId ?? null));
       c.on('wallet:signOut', () => setAccountId(null));
       try {
@@ -120,7 +130,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       accountId,
       ready,
       connect: async () => {
-        await connector.current?.connect();
+        if (privyEnabled()) setSignInOpen(true);
+        else await connector.current?.connect();
+      },
+      connectWallet: async (walletId) => {
+        await connector.current?.connect(walletId ? { walletId } : undefined);
       },
       disconnect: async () => {
         await connector.current?.disconnect();
@@ -152,7 +166,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [accountId, ready, call, wallet],
   );
 
-  return <WalletCtx.Provider value={value}>{children}</WalletCtx.Provider>;
+  return (
+    <WalletCtx.Provider value={value}>
+      {children}
+      {signInOpen && <SignInDialog onClose={() => setSignInOpen(false)} />}
+    </WalletCtx.Provider>
+  );
 }
 
 export function useWallet() {

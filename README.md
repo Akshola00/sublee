@@ -10,7 +10,7 @@ Built for NEAR HACKATHON. Tracks: **privacy** (primary), **nfts**, **realworld**
 
 ## Try it (about 3 minutes)
 
-1. Open the app and **Connect wallet** (any NEAR testnet wallet: HOT, Meteor, MyNearWallet, Intear).
+1. Open the app and **Sign in**: with your email (Privy makes you a NEAR testnet account and we add 0.3 test NEAR), or with any NEAR testnet wallet (HOT, Meteor, MyNearWallet, Intear).
 2. Pick a specialist, e.g. *General practice second look*.
 3. **Pay** with NEAR, testnet USDC, or card credit. Card payments run in Stripe test mode (card `4242 4242 4242 4242`). When Stripe isn't configured, the card option offers free test credit instead, and says so.
 4. Click a **sample case** (e.g. *Tired, odd blood test*), or write your own. You can attach a PDF lab report: its text is read on your device and encrypted with the case. The file itself is never uploaded.
@@ -64,6 +64,7 @@ browser ──(5) decrypt stream, verify the enclave's response signature + resp
 - **Escrowed consult ledger:** `Paid → Claimed → Used` or `→ Refunded`. The 85/15 split is released only when an answer is delivered.
 - **Payment in NEAR, in USDC** (`ft_transfer_call`, NEP-141), **or card credit** (`credit_fiat`, idempotent on the Stripe session id).
 - **Function-call access key:** the server's key can call only `claim`, `mark_used`, `refund` and `credit_fiat`. It can't move funds.
+- **Email sign-in via Privy** (`@peerfolio/privy-near-connect`): an embedded key controls a NEAR implicit account, signing in a same-site popup.
 - **NEP-413 signed messages** authorise each consult and each cancellation, and derive the history key.
 - **NEAR AI Cloud** private inference with attestation.
 
@@ -100,6 +101,8 @@ pnpm exec vitest run         # crypto, units, webhook signature tests
 | `PROMPT_SEAL_SECRET` | X25519 secret for prompt sealing |
 | `CONTRACT_ID`, `NEAR_NETWORK` | `sublee.testnet`, `testnet` |
 | `SERVER_ACCOUNT_ID`, `SERVER_PRIVATE_KEY` | function-call key for the server account |
+| `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_CLIENT_ID` | Privy app (public ids) for email sign-in; without them only NEAR wallets are offered |
+| `FUNDER_ACCOUNT_ID`, `FUNDER_PRIVATE_KEY` | testnet account that tops up new email accounts with 0.3 NEAR |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | optional; `sk_test_…` only. Without them, card credit uses testnet test credit |
 
 Scripts in `web/scripts/` (run with `npx tsx`):

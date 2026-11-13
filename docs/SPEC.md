@@ -151,6 +151,7 @@ balances: patient_id -> fiat credit (USD cents)   // credited by server after St
 | `POST /api/stripe/checkout` | Creates a Checkout Session (test mode) for N consult credits |
 | `POST /api/stripe/webhook` | On `checkout.session.completed` → `credit_fiat` (idempotent) |
 | `POST /api/stripe/confirm` | On return from Checkout: reads the session from Stripe and credits it (idempotent with the webhook, so it works without a webhook locally) |
+| `POST /api/fund` | Testnet only: after a verified Privy login (ES256 JWT checked against the app's JWKS), sends 0.3 test NEAR to a new implicit account that doesn't exist yet. Capped by the funder account's balance. |
 | `GET /api/credit/mode` · `POST /api/credit/test` | Without a Stripe key (testnet only): a labelled $5 test credit, once per account per day. No money moves. |
 
 When NEAR AI returns 402 (out of credits), `/api/consult` refunds and returns `code: no_credits`; the client may show an example answer written in advance, always labelled as not generated and never saved or signed.
