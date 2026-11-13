@@ -6,6 +6,8 @@ Built for NEAR HACKATHON. Tracks: **privacy** (primary), **nfts**, **realworld**
 
 > Sublee gives second opinions, not diagnoses. The demo specialists and sample cases are fictional.
 
+**Demo video (2:38):** https://youtu.be/RbhMTT0kjzo
+
 ---
 
 ## Try it (about 3 minutes)
